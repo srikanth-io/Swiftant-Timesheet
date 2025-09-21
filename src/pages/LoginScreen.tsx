@@ -19,6 +19,9 @@ import { AppConstants } from "../constants/AppConstants";
 import { AppColors } from "../constants/AppColors";
 import { AppScreen, AppVersion } from "../constants/AppScreens";
 import { AppIcons } from "../constants/AppIcons";
+import Toast from "react-native-toast-message";
+import { AppErrors } from "../constants/AppErrors";
+import { AuthController } from "../controllers/AuthController";
 
 const LoginScreen: React.FC = () => {
     const [email, setEmail] = useState("");
@@ -31,27 +34,57 @@ const LoginScreen: React.FC = () => {
         navigation.setOptions({ headerShown: false });
     }, [navigation]);
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email)) {
+            Toast.show({ type: 'error', text1: AppErrors.invalidCredentials });
+            return;
+        }
+
+        if (!password || password.length < 6) {
+            Toast.show({ type: 'error', text1: AppErrors.invalidPassword });
+            return;
+        }
         console.log("Logging in with:", email, password);
+        try {
+            const user = await AuthController.loginUser(email, password);
+            Toast.show({ type: 'success', text1: 'Login successful' });
+            console.log(user);
+            clearInputs();
+            navigation.navigate(AppScreen.HOMESCREEN as never);
+        } catch (err: any) {
+            Toast.show({ type: 'error', text1: err.message });
+        }
     };
+
+    const clearInputs = () => {
+        setEmail('');
+        setPassword('');
+    }
 
     const handleForgotPassword = () => {
         console.log("Forgot password tapped");
     };
 
-    const handleGoogleSignIn = () => {
+    const handleSignup = () => {
         console.log("Google sign-in tapped");
     };
 
-    const handleSignup = () => {
-        console.log("Signup tapped");
+    const handleGoogleSignIn = async (idToken: string) => {
+        try {
+            const user = await AuthController.googleSignIn(idToken);
+            console.log('Logged in user:', user);
+            Toast.show({ type: 'success', text1: 'Logged in with Google!' });
+        } catch (err: any) {
+            Toast.show({ type: 'error', text1: err.message });
+        }
         navigation.navigate(AppScreen.REGISTERSCREEN as never);
     };
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false} style={{ flex: 1 }}>
             <KeyboardAvoidingView
-                style={{ flex: 1, backgroundColor: AppColors.white }}
+                style={{ flex: 1, backgroundColor: AppColors.white ? AppColors.white : 'transparent' }}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
             >
@@ -125,7 +158,7 @@ const LoginScreen: React.FC = () => {
                         {/* Google sign-in */}
                         <TouchableOpacity
                             style={styles.googleButton}
-                            onPress={handleGoogleSignIn}
+                            onPress={() => handleGoogleSignIn}
                         >
                             <Text style={styles.googleText}>Sign in with Google</Text>
                         </TouchableOpacity>

@@ -6,6 +6,7 @@ import { HomeScreen } from "./src/pages/HomeScreen";
 import { DetailsScreen } from "./src/pages/DetailsScreen";
 import { SettingsScreen } from "./src/pages/SettingsScreen";
 import RegisterScreen from "./src/pages/RegisterScreen";
+import Toast from "react-native-toast-message";
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +20,7 @@ export default function App() {
         <Stack.Screen name={AppScreen.DETAILSSCREEN} component={DetailsScreen} />
         <Stack.Screen name={AppScreen.SETTINGSSCREEN} component={SettingsScreen} />
       </Stack.Navigator>
+      <Toast />
     </NavigationContainer>
   );
 }
