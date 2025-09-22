@@ -78,7 +78,7 @@ export class AuthController {
     static async logout(): Promise<void> {
         try {
             await auth.signOut();
-            console.log('User logged out');
+            ToastAndroid.show(`You've been logged out`, ToastAndroid.BOTTOM);
         } catch (error: any) {
             ToastAndroid.show(error.message, ToastAndroid.BOTTOM);
             throw new Error(error.message);

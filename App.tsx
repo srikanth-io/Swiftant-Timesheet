@@ -1,92 +1,126 @@
 import React, { useEffect, useState } from "react";
+import { View, StyleSheet, ToastAndroid } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator, CardStyleInterpolators } from "@react-navigation/stack";
 import NetInfo from "@react-native-community/netinfo";
-import { ToastAndroid, View, StyleSheet } from "react-native";
-import { AppScreen } from "./src/constants/AppScreens";
+import { AuthController } from "./src/controllers/AuthController";
+import { AppErrors } from "./src/constants/AppErrors";
+import { TabNavigator } from "./src/shared/TabNavigation.shared";
+import { createStackNavigator, CardStyleInterpolators } from "@react-navigation/stack";
 import LoginScreen from "./src/pages/LoginScreen";
 import RegisterScreen from "./src/pages/RegisterScreen";
 import ForgotPasswordScreen from "./src/pages/ForgotPasswordScreen";
-import { HomeScreen } from "./src/pages/HomeScreen";
-import { DetailsScreen } from "./src/pages/DetailsScreen";
-import { SettingsScreen } from "./src/pages/SettingsScreen";
-import { AuthController } from "./src/controllers/AuthController";
-import { AppErrors } from "./src/constants/AppErrors";
+import { AppScreen } from "./src/constants/AppScreens";
+import { LayoutScreen } from "./src/pages/LayoutScreen";
+import { ProfileScreen } from "./src/pages/ProfileScreen";
 
 const Stack = createStackNavigator();
 
 export default function App() {
-  const [initialRoute, setInitialRoute] = useState<AppScreen | null>(null);
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
 
+  // Track auth state
   useEffect(() => {
-    // Auth state observer
-    const unsubscribeAuth = AuthController.observeAuth((user) => {
-      if (user) {
-        setInitialRoute(AppScreen.HOMESCREEN);
-      } else {
-        setInitialRoute(AppScreen.LOGINSCREEN);
-      }
+    const unsubscribeAuth = AuthController.observeAuth((currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
     });
+    return () => unsubscribeAuth();
+  }, []);
 
-    // NetInfo listener
-    const unsubscribeNetInfo = NetInfo.addEventListener((state: { isConnected: any; }) => {
-      const wasOffline = isOffline;
+  // Track network status
+  useEffect(() => {
+    const unsubscribeNetInfo = NetInfo.addEventListener((state) => {
       const isConnected = state.isConnected;
-
-      if (isConnected) {
-        if (wasOffline) {
-          ToastAndroid.show(AppErrors.onlineStatus, ToastAndroid.LONG);
-        }
-      } else if (!wasOffline) {
+      if (!isConnected && !isOffline) {
         ToastAndroid.show(AppErrors.offlineStatus, ToastAndroid.LONG);
+      } else if (isConnected && isOffline) {
+        ToastAndroid.show(AppErrors.onlineStatus, ToastAndroid.LONG);
       }
       setIsOffline(!isConnected);
     });
 
-    return () => {
-      unsubscribeAuth();
-      unsubscribeNetInfo();
-    };
+    return () => unsubscribeNetInfo();
   }, [isOffline]);
 
-  if (!initialRoute) {
-    return null;
-  }
+  if (loading) return null;
 
   return (
-    <View style={isOffline ? styles.offlineContainer : styles.onlineContainer}>
+    <View style={{ flex: 1 }}>
       <NavigationContainer>
-        <Stack.Navigator 
-          initialRouteName={initialRoute} 
-          screenOptions={{
-            headerShown: false,
-            gestureEnabled: true,
-            cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
-          }}>
-          <Stack.Screen name={AppScreen.LOGINSCREEN} component={LoginScreen} />
-          <Stack.Screen name={AppScreen.REGISTERSCREEN} component={RegisterScreen} />
-          <Stack.Screen name={AppScreen.FORGOTPASSWORDSCREEN} component={ForgotPasswordScreen} />
-          <Stack.Screen name={AppScreen.HOMESCREEN} component={HomeScreen} />
-          <Stack.Screen name={AppScreen.DETAILSSCREEN} component={DetailsScreen} />
-          <Stack.Screen name={AppScreen.SETTINGSSCREEN} component={SettingsScreen} />
-        </Stack.Navigator>
+        {user ? (
+          <Stack.Navigator
+            screenOptions={{ headerShown: false, gestureEnabled: false }}
+          >
+            <Stack.Screen
+              name={AppScreen.LAYOUTSCREEN}
+              component={LayoutScreen}
+              options={{
+                cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+              }}
+            />
+            <Stack.Screen
+              name="MainTabs"
+              component={TabNavigator}
+              options={{
+                cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+              }}
+            />
+            <Stack.Screen
+              name={AppScreen.PROFILESCREEN}
+              component={ProfileScreen}
+              options={{
+                gestureEnabled: true,
+                gestureDirection: "vertical",
+                cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
+              }}
+            />
+          </Stack.Navigator>
+        ) : (
+          <Stack.Navigator
+            screenOptions={{ headerShown: false, gestureEnabled: false }}
+          >
+            <Stack.Screen
+              name={AppScreen.LOGINSCREEN}
+              component={LoginScreen}
+              options={{
+                gestureEnabled: true,
+                gestureDirection: "vertical",
+                cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
+              }}
+            />
+            <Stack.Screen
+              name={AppScreen.REGISTERSCREEN}
+              component={RegisterScreen}
+              options={{
+                gestureEnabled: true,
+                gestureDirection: "vertical",
+                cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
+              }}
+            />
+            <Stack.Screen
+              name={AppScreen.FORGOTPASSWORDSCREEN}
+              component={ForgotPasswordScreen}
+              options={{
+                gestureEnabled: true,
+                gestureDirection: "vertical",
+                cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
+              }}
+            />
+          </Stack.Navigator>
+        )}
       </NavigationContainer>
+
       {isOffline && <View style={styles.greyscaleOverlay} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  onlineContainer: {
-    flex: 1,
-  },
-  offlineContainer: {
-    flex: 1,
-  },
   greyscaleOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
     zIndex: 1000,
   },
 });

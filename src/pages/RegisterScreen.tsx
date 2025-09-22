@@ -24,7 +24,7 @@ import { AppIcons } from "../constants/AppIcons";
 import { AppErrors } from "../constants/AppErrors";
 import { AuthController } from "../controllers/AuthController";
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
-import BackButton from "../shared/backBtn";
+import BackButton from "../shared/BackBtn.shared";
 
 const db = getFirestore();
 
@@ -89,7 +89,7 @@ const RegisterScreen: React.FC = () => {
             ToastAndroid.show('Registered successfully!', ToastAndroid.BOTTOM);
             console.log(user);
             clearInputs();
-            navigation.navigate(AppScreen.HOMESCREEN as never);
+            navigation.navigate(AppScreen.LAYOUTSCREEN as never);
         } catch (err: any) {
             ToastAndroid.show(err.message, ToastAndroid.BOTTOM);
         }

@@ -1,10 +1,12 @@
 export enum AppScreen {
     LOGINSCREEN = 'Login',
     REGISTERSCREEN = 'Register',
-    FORGOTPASSWORDSCREEN = 'ForgotPassword',   
+    FORGOTPASSWORDSCREEN = 'ForgotPassword',  
+    LAYOUTSCREEN = 'Layout', 
     HOMESCREEN = 'Home',
     DETAILSSCREEN = 'Details',
     SETTINGSSCREEN = 'Settings',
+    PROFILESCREEN = 'Profile',
 }
 
 export const AppVersion = {

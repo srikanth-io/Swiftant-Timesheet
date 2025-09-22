@@ -22,8 +22,10 @@ import { AppScreen, AppVersion } from "../constants/AppScreens";
 import { AppIcons } from "../constants/AppIcons";
 import { AppErrors } from "../constants/AppErrors";
 import { AuthController } from "../controllers/AuthController";
+import { User } from "firebase/auth";
 
 const LoginScreen: React.FC = () => {
+    const [user, setUser] = useState<User | null>(null);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -70,7 +72,7 @@ const LoginScreen: React.FC = () => {
             ToastAndroid.show('Login successful', ToastAndroid.BOTTOM);
             console.log(user);
             clearInputs();
-            navigation.navigate(AppScreen.HOMESCREEN as never);
+            setUser(user);
         } catch (err: any) {
             ToastAndroid.show(err.message, ToastAndroid.BOTTOM);
         }
@@ -94,7 +96,7 @@ const LoginScreen: React.FC = () => {
             const user = await AuthController.googleSignIn(idToken);
             console.log('Logged in user:', user);
             ToastAndroid.show('Google sign-in successful', ToastAndroid.BOTTOM);
-            navigation.navigate(AppScreen.HOMESCREEN as never);
+            navigation.navigate(AppScreen.LAYOUTSCREEN as never);
         } catch (err: any) {
             ToastAndroid.show(err.message, ToastAndroid.BOTTOM);
         }

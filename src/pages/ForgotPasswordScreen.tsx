@@ -20,7 +20,7 @@ import { AppConstants } from "../constants/AppConstants";
 import { AppColors } from "../constants/AppColors";
 import { AppErrors } from "../constants/AppErrors";
 import { AuthController } from "../controllers/AuthController";
-import BackButton from "../shared/backBtn";
+import BackButton from "../shared/BackBtn.shared";
 
 const ForgotPasswordScreen: React.FC = () => {
     const [email, setEmail] = useState("");
