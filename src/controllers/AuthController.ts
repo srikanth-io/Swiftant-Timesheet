@@ -1,7 +1,7 @@
-import Toast from 'react-native-toast-message';
 import { auth, db } from '../core/config';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithCredential, signInWithEmailAndPassword, User } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, sendPasswordResetEmail, signInWithCredential, signInWithEmailAndPassword, User } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { ToastAndroid } from 'react-native';
 
 export class AuthController {
     // Register user
@@ -11,7 +11,7 @@ export class AuthController {
             console.log('User registered:', userCredential.user);
             return userCredential.user;
         } catch (error: any) {
-            Toast.show({ type: 'error', text1: 'Register error:', text2: error.message });
+            ToastAndroid.show(error.message, ToastAndroid.BOTTOM);
             throw new Error(error.message);
         }
     }
@@ -20,10 +20,10 @@ export class AuthController {
     static async loginUser(email: string, password: string): Promise<User | null> {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            console.log({ type: 'success', text1: 'User logged in:', text2: userCredential.user });
+            console.log(userCredential.user);
             return userCredential.user;
         } catch (error: any) {
-            Toast.show({ type: 'error', text1: 'Login error:', text2: error.message });
+            ToastAndroid.show(error.message, ToastAndroid.BOTTOM);
             throw new Error(error.message);
         }
     }
@@ -50,6 +50,24 @@ export class AuthController {
         }
     }
 
+    // Check User Login Status
+    public static readonly observeAuth = (callback: (user: User | null) => void) => {
+        return onAuthStateChanged(auth, (user) => {
+            callback(user);
+        });
+
+    }
+
+    // Password Reset Email
+    static async sendPasswordResetEmail(email: string): Promise<void> {
+        try {
+            await sendPasswordResetEmail(auth, email);
+            console.log('Password reset email sent to: ', email);
+        } catch (error: any) {
+            console.error("Error sending reset email:", error);
+            throw new Error(error.message || "Failed to send password reset email");
+        }
+    }
 
     // Get current user
     static getCurrentUser(): User | null {
@@ -62,7 +80,7 @@ export class AuthController {
             await auth.signOut();
             console.log('User logged out');
         } catch (error: any) {
-            Toast.show({ type: 'error', text1: 'Logout error:', text2: error.message });
+            ToastAndroid.show(error.message, ToastAndroid.BOTTOM);
             throw new Error(error.message);
         }
     }

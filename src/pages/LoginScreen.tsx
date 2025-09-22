@@ -13,13 +13,13 @@ import {
     Platform,
     Image,
     StatusBar,
+    ToastAndroid,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { AppConstants } from "../constants/AppConstants";
 import { AppColors } from "../constants/AppColors";
 import { AppScreen, AppVersion } from "../constants/AppScreens";
 import { AppIcons } from "../constants/AppIcons";
-import Toast from "react-native-toast-message";
 import { AppErrors } from "../constants/AppErrors";
 import { AuthController } from "../controllers/AuthController";
 
@@ -27,6 +27,21 @@ const LoginScreen: React.FC = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+    useEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+            setKeyboardVisible(true);
+        });
+        const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+            setKeyboardVisible(false);
+        });
+
+        return () => {
+            keyboardDidHideListener.remove();
+            keyboardDidShowListener.remove();
+        };
+    }, []);
 
     const navigation = useNavigation();
 
@@ -36,24 +51,28 @@ const LoginScreen: React.FC = () => {
 
     const handleLogin = async () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !password) {
+            ToastAndroid.show(AppErrors.emptyCredentials, ToastAndroid.BOTTOM);
+            return;
+        }
+
         if (!email || !emailRegex.test(email)) {
-            Toast.show({ type: 'error', text1: AppErrors.invalidCredentials });
+            ToastAndroid.show(AppErrors.invalidCredentials, ToastAndroid.BOTTOM);
             return;
         }
 
         if (!password || password.length < 6) {
-            Toast.show({ type: 'error', text1: AppErrors.invalidPassword });
+            ToastAndroid.show(AppErrors.invalidPassword, ToastAndroid.BOTTOM);
             return;
         }
-        console.log("Logging in with:", email, password);
         try {
             const user = await AuthController.loginUser(email, password);
-            Toast.show({ type: 'success', text1: 'Login successful' });
+            ToastAndroid.show('Login successful', ToastAndroid.BOTTOM);
             console.log(user);
             clearInputs();
             navigation.navigate(AppScreen.HOMESCREEN as never);
         } catch (err: any) {
-            Toast.show({ type: 'error', text1: err.message });
+            ToastAndroid.show(err.message, ToastAndroid.BOTTOM);
         }
     };
 
@@ -63,31 +82,36 @@ const LoginScreen: React.FC = () => {
     }
 
     const handleForgotPassword = () => {
-        console.log("Forgot password tapped");
+        navigation.navigate(AppScreen.FORGOTPASSWORDSCREEN as never);
     };
 
     const handleSignup = () => {
-        console.log("Google sign-in tapped");
+        navigation.navigate(AppScreen.REGISTERSCREEN as never);
     };
 
     const handleGoogleSignIn = async (idToken: string) => {
         try {
             const user = await AuthController.googleSignIn(idToken);
             console.log('Logged in user:', user);
-            Toast.show({ type: 'success', text1: 'Logged in with Google!' });
+            ToastAndroid.show('Google sign-in successful', ToastAndroid.BOTTOM);
+            navigation.navigate(AppScreen.HOMESCREEN as never);
         } catch (err: any) {
-            Toast.show({ type: 'error', text1: err.message });
+            ToastAndroid.show(err.message, ToastAndroid.BOTTOM);
         }
-        navigation.navigate(AppScreen.REGISTERSCREEN as never);
     };
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false} style={{ flex: 1 }}>
             <KeyboardAvoidingView
-                style={{ flex: 1, backgroundColor: AppColors.white ? AppColors.white : 'transparent' }}
+                style={{ flex: 1 }}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
-                keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+                keyboardVerticalOffset={keyboardVisible ? 0 : -50}
             >
+                <StatusBar
+                    backgroundColor="transparent"
+                    barStyle="light-content"
+                    translucent={true}
+                />
                 <ScrollView
                     contentContainerStyle={{ flexGrow: 1 }}
                     keyboardShouldPersistTaps="handled"
@@ -95,7 +119,7 @@ const LoginScreen: React.FC = () => {
                 >
                     <View style={styles.imageContainer}>
                         <Image
-                            source={require("../../assets/img/greenForest.jpg")}
+                            source={require("../../assets/img/greenBranch.jpg")}
                             style={styles.image}
                             resizeMode="cover"
                         />
@@ -172,7 +196,6 @@ const LoginScreen: React.FC = () => {
                         </View>
                     </View>
                 </ScrollView>
-                <StatusBar hidden />
             </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
     );

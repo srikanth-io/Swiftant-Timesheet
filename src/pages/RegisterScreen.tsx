@@ -12,6 +12,7 @@ import {
     ScrollView,
     Platform,
     Image,
+    ToastAndroid,
     StatusBar,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -20,10 +21,10 @@ import { AppConstants } from "../constants/AppConstants";
 import { AppColors } from "../constants/AppColors";
 import { AppScreen } from "../constants/AppScreens";
 import { AppIcons } from "../constants/AppIcons";
-import Toast from "react-native-toast-message";
 import { AppErrors } from "../constants/AppErrors";
 import { AuthController } from "../controllers/AuthController";
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import BackButton from "../shared/backBtn";
 
 const db = getFirestore();
 
@@ -32,7 +33,22 @@ const RegisterScreen: React.FC = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [isChecked, setChecked] = useState(false);
+    const [isChecked, setChecked] = useState<boolean>(false);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+    useEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+            setKeyboardVisible(true);
+        });
+        const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+            setKeyboardVisible(false);
+        });
+
+        return () => {
+            keyboardDidHideListener.remove();
+            keyboardDidShowListener.remove();
+        };
+    }, []);
 
     const navigation = useNavigation();
 
@@ -42,27 +58,27 @@ const RegisterScreen: React.FC = () => {
 
     const handleRegister = async () => {
         if (!userName || userName.trim().length < 3) {
-            Toast.show({ type: 'error', text1: AppErrors.minUserName });
+            ToastAndroid.show(AppErrors.minUserName, ToastAndroid.BOTTOM);
             return;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!email || !emailRegex.test(email)) {
-            Toast.show({ type: 'error', text1: AppErrors.validEmail });
+            ToastAndroid.show(AppErrors.validEmail, ToastAndroid.BOTTOM);
             return;
         }
 
         if (!password || password.length < 6) {
-            Toast.show({ type: 'error', text1: AppErrors.minPassword });
+            ToastAndroid.show(AppErrors.minPassword, ToastAndroid.BOTTOM);
             return;
         }
 
         if (!isChecked) {
-            Toast.show({ type: 'error', text1: AppErrors.termsAndConditions });
+            ToastAndroid.show(AppErrors.termsAndConditions, ToastAndroid.BOTTOM);
             return;
         }
         console.log("Registering with:", userName, email, password);
-        Toast.show({ type: 'success', text1: AppErrors.regSuccess });
+        ToastAndroid.show(AppErrors.regSuccess, ToastAndroid.BOTTOM);
 
         try {
             const user = await AuthController.registerUser(email, password);
@@ -70,17 +86,17 @@ const RegisterScreen: React.FC = () => {
                 throw new Error('Registration failed: User is null');
             }
             await setDoc(doc(db, 'users', user.uid), { username: userName, email });
-            Toast.show({ type: 'success', text1: 'Registered successfully!' });
+            ToastAndroid.show('Registered successfully!', ToastAndroid.BOTTOM);
             console.log(user);
             clearInputs();
-            navigation.navigate(AppScreen.LOGINSCREEN as never);
+            navigation.navigate(AppScreen.HOMESCREEN as never);
         } catch (err: any) {
-            Toast.show({ type: 'error', text1: err.message });
+            ToastAndroid.show(err.message, ToastAndroid.BOTTOM);
         }
     };
 
     const handleLoginRoute = () => {
-        navigation.navigate(AppScreen.LOGINSCREEN as never);
+        navigation.goBack();
     };
 
     const clearInputs = () => {
@@ -93,18 +109,24 @@ const RegisterScreen: React.FC = () => {
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
             <KeyboardAvoidingView
-                style={{ flex: 1, backgroundColor: AppColors.white ? AppColors.white : 'transparent' }}
+                style={{ flex: 1 }}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
-                keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+                keyboardVerticalOffset={keyboardVisible ? 0 : -50}
             >
+                <StatusBar
+                    backgroundColor="transparent"
+                    barStyle="light-content"
+                    translucent={true}
+                />
                 <ScrollView
                     contentContainerStyle={{ flexGrow: 1 }}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
+                    <BackButton />
                     <View style={styles.imageContainer}>
                         <Image
-                            source={require("../../assets/img/greenBranch.jpg")}
+                            source={require("../../assets/img/greenForest.jpg")}
                             style={styles.image}
                             resizeMode="cover"
                         />
@@ -156,9 +178,9 @@ const RegisterScreen: React.FC = () => {
                                 onPress={() => setShowPassword(!showPassword)}
                             >
                                 {showPassword ? (
-                                    <AppIcons.EyeClose size={22} color={AppColors.green900} />
+                                    <AppIcons.EyeClose size={22} />
                                 ) : (
-                                    <AppIcons.EyeOpen size={22} color={AppColors.green900} />
+                                    <AppIcons.EyeOpen size={22} />
                                 )}
                             </TouchableOpacity>
                         </View>
@@ -189,7 +211,6 @@ const RegisterScreen: React.FC = () => {
                         </View>
                     </View>
                 </ScrollView>
-                <StatusBar hidden />
             </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
     );
