@@ -20,10 +20,10 @@ export const TabNavigator = () => {
 
         return {
           headerShown: false,
-          tabBarIcon: ({ color, size, focused }) =>
+          tabBarIcon: ({ size, focused }) =>
             Icon ? (
               <Icon
-                color={focused ? AppColors.darkGreen : AppColors.gray}
+                color={focused ? AppColors.darkGreen : AppColors.darkGray}
                 size={size}
               />
             ) : null,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     borderRadius: AppConstants.buttonRadius,
-    backgroundColor: AppColors.white,
+    backgroundColor: AppColors.green50,
     paddingTop: 10,
     height: 70,
     justifyContent: "center",

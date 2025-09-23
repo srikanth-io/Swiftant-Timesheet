@@ -1,6 +1,15 @@
-import { auth, db } from '../core/config';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, sendPasswordResetEmail, signInWithCredential, signInWithEmailAndPassword, User } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth } from '../core/config';
+import {
+    createUserWithEmailAndPassword,
+    getRedirectResult,
+    GoogleAuthProvider,
+    onAuthStateChanged,
+    sendPasswordResetEmail,
+    signInWithEmailAndPassword,
+    signInWithPopup,
+    signInWithRedirect,
+    User,
+} from 'firebase/auth';
 import { ToastAndroid } from 'react-native';
 
 export class AuthController {
@@ -11,7 +20,7 @@ export class AuthController {
             console.log('User registered:', userCredential.user);
             return userCredential.user;
         } catch (error: any) {
-            ToastAndroid.show(error.message, ToastAndroid.BOTTOM);
+            ToastAndroid.show(error.message, ToastAndroid.LONG);
             throw new Error(error.message);
         }
     }
@@ -20,45 +29,41 @@ export class AuthController {
     static async loginUser(email: string, password: string): Promise<User | null> {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            console.log(userCredential.user);
+            console.log('User logged in:', userCredential.user);
             return userCredential.user;
         } catch (error: any) {
-            ToastAndroid.show(error.message, ToastAndroid.BOTTOM);
+            ToastAndroid.show(error.message, ToastAndroid.LONG);
             throw new Error(error.message);
         }
     }
 
-    // Signup with Google
-    static async googleSignIn(idToken: string): Promise<User | null> {
-        try {
-            const credential = GoogleAuthProvider.credential(idToken);
-            const userCredential = await signInWithCredential(auth, credential);
-            const user = userCredential.user;
+    // Google Sign-In
+    static async googleSignIn(): Promise<User | null> {
+        const provider = new GoogleAuthProvider();
 
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (!userDoc.exists()) {
-                await setDoc(doc(db, 'users', user.uid), {
-                    username: user.displayName || '',
-                    email: user.email || '',
-                    photoURL: user.photoURL || '',
-                    createdAt: new Date(),
-                });
-            }
-            return user;
+        try {
+            const result = await signInWithPopup(auth, provider);
+            return result.user;
         } catch (err: any) {
-            throw new Error(err.message);
+            console.error('Popup sign-in failed:', err.message);
+            try {
+                await signInWithRedirect(auth, provider);
+                const result = await getRedirectResult(auth);
+                return result ? result.user : null;
+            } catch (redirectError: any) {
+                console.error('Redirect sign-in failed:', redirectError.message);
+                ToastAndroid.show(redirectError.message, ToastAndroid.LONG);
+                throw new Error(redirectError.message);
+            }
         }
     }
 
-    // Check User Login Status
-    public static readonly observeAuth = (callback: (user: User | null) => void) => {
-        return onAuthStateChanged(auth, (user) => {
-            callback(user);
-        });
-
+    // Observe login status
+    static observeAuth(callback: (user: User | null) => void): () => void {
+        return onAuthStateChanged(auth, (user) => callback(user));
     }
 
-    // Password Reset Email
+    // Password Reset
     static async sendPasswordResetEmail(email: string): Promise<void> {
         try {
             await sendPasswordResetEmail(auth, email);
@@ -78,9 +83,9 @@ export class AuthController {
     static async logout(): Promise<void> {
         try {
             await auth.signOut();
-            ToastAndroid.show(`You've been logged out`, ToastAndroid.BOTTOM);
+            ToastAndroid.show(`You've been logged out`, ToastAndroid.SHORT);
         } catch (error: any) {
-            ToastAndroid.show(error.message, ToastAndroid.BOTTOM);
+            ToastAndroid.show(error.message, ToastAndroid.LONG);
             throw new Error(error.message);
         }
     }

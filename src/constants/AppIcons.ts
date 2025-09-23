@@ -1,4 +1,4 @@
-import { Book, Code, CodeXml, Coffee, Cog, Download, Eye, EyeOff, FolderClock, Heart, House, LogOut, Mail, MoveLeft, MoveRight, Pencil, UserRound } from "lucide-react-native";
+import { Book, Code, CodeXml, Coffee, Cog, Download, Eye, EyeOff, FolderClock, Github, Heart, House, Instagram, Linkedin, LogOut, Mail, MoveLeft, MoveRight, Pencil, UserRound } from "lucide-react-native";
 
 export const AppIcons = {
     EyeOpen: Eye,
@@ -17,5 +17,8 @@ export const AppIcons = {
     Book: Book,
     Mail: Mail,
     Download: Download,
-    Settings: Cog
+    Settings: Cog,
+    Github: Github,
+    LinkedIn: Linkedin,
+    Instagram: Instagram
 }

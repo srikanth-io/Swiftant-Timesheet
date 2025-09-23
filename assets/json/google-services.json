@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "845230882308",
+    "project_id": "swiftant-timesheet",
+    "storage_bucket": "swiftant-timesheet.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:845230882308:android:eca9e162b8b1121410ff51",
+        "android_client_info": {
+          "package_name": "com.srikanthio.swiftanttimesheet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "845230882308-22frbpvhbiea7uqruq8mov901kbgnn5s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjScHY-ZUqgbfKo7ttJl2tQwf7yl_Z820"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "845230882308-22frbpvhbiea7uqruq8mov901kbgnn5s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

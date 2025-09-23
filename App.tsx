@@ -20,10 +20,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
 
-  // Track auth state
   useEffect(() => {
     const unsubscribeAuth = AuthController.observeAuth((currentUser) => {
-      setUser(currentUser);
+      setUser(currentUser); 
       setLoading(false);
     });
     return () => unsubscribeAuth();
@@ -51,7 +50,7 @@ export default function App() {
       <NavigationContainer>
         {user ? (
           <Stack.Navigator
-            screenOptions={{ headerShown: false, gestureEnabled: false }}
+            screenOptions={{ headerShown: false, gestureEnabled: true }}
           >
             <Stack.Screen
               name={AppScreen.LAYOUTSCREEN}

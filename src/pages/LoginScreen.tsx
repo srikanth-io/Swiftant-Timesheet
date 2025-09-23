@@ -1,4 +1,4 @@
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
     View,
@@ -18,7 +18,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { AppConstants } from "../constants/AppConstants";
 import { AppColors } from "../constants/AppColors";
-import { AppScreen, AppVersion } from "../constants/AppScreens";
+import { AppScreen, AppVersion, RootStackParamList } from "../constants/AppScreens";
 import { AppIcons } from "../constants/AppIcons";
 import { AppErrors } from "../constants/AppErrors";
 import { AuthController } from "../controllers/AuthController";
@@ -45,7 +45,7 @@ const LoginScreen: React.FC = () => {
         };
     }, []);
 
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
     useEffect(() => {
         navigation.setOptions({ headerShown: false });
@@ -91,12 +91,10 @@ const LoginScreen: React.FC = () => {
         navigation.navigate(AppScreen.REGISTERSCREEN as never);
     };
 
-    const handleGoogleSignIn = async (idToken: string) => {
+    const handleGoogleSignIn = async () => {
         try {
-            const user = await AuthController.googleSignIn(idToken);
-            console.log('Logged in user:', user);
-            ToastAndroid.show('Google sign-in successful', ToastAndroid.BOTTOM);
-            navigation.navigate(AppScreen.LAYOUTSCREEN as never);
+            const user = await AuthController.googleSignIn();
+            ToastAndroid.show(`Signed with: ${user?.email || ''}`, ToastAndroid.BOTTOM);
         } catch (err: any) {
             ToastAndroid.show(err.message, ToastAndroid.BOTTOM);
         }

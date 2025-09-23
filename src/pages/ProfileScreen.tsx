@@ -1,19 +1,35 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
+import {
+    View,
+    Text,
+    TextInput,
+    StyleSheet,
+    ScrollView,
+    TouchableOpacity,
+    Image,
+} from "react-native";
 import { AppColors } from "../constants/AppColors";
 import { AppConstants } from "../constants/AppConstants";
 import { settingsController } from "../controllers/SettingsController";
 import { AppIcons } from "../constants/AppIcons";
 import BackButton from "../shared/BackBtn.shared";
+import { Linking } from "react-native";
+import { SocialLink } from "../models/socialLinks.model";
 
 export const ProfileScreen = () => {
     const [username, setUsername] = useState<string>("");
     const [email, setEmail] = useState<string>("");
-    const [editable, setEditable] = useState<boolean>(false);
     const [profileUrl, setProfileUrl] = useState<string | null>(null);
-    const [userTag, setUserTag] = useState<string | null>(null);
+    const [editable, setEditable] = useState<boolean>(false);
+
+    const socialLinks: SocialLink[] = [
+        { name: 'GitHub', icon: AppIcons.Github, url: 'https://github.com/srikanth-io' },
+        { name: 'LinkedIn', icon: AppIcons.LinkedIn, url: 'https://www.linkedin.com/in/srikanth-io/' },
+        { name: 'Instagram', icon: AppIcons.Instagram, url: 'https://www.instagram.com/username/' },
+    ];
 
     useEffect(() => {
+        // Fetch user data
         settingsController.getAccountDetails().then((data) => {
             if (data) {
                 setUsername(data.username);
@@ -23,23 +39,30 @@ export const ProfileScreen = () => {
     }, []);
 
     const pickImage = async () => {
-        const mockImage = "../../assets/img/person.png";
-        console.log("Image picker opened. Setting mock image.");
+        const mockImage = "../../assets/img/person.png"; // Replace with actual image picker
         setProfileUrl(mockImage);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (editable) {
-            settingsController.updateUsername(username);
+            await settingsController.updateUsername(username);
+            // Save social links if needed
         }
         setEditable(!editable);
     };
 
+    const openLink = async (url: string) => {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) await Linking.openURL(url);
+        else console.warn("Cannot open URL:", url);
+    };
+
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.profileSection}>
-                <BackButton />
-                <TouchableOpacity onPress={pickImage} style={styles.profileImageWrapper}>
+        <View style={styles.container}>
+            <BackButton />
+            <ScrollView contentContainerStyle={styles.scrollContainer}>
+                {/* Profile Picture */}
+                <TouchableOpacity style={styles.profileImageWrapper} onPress={pickImage}>
                     <Image
                         source={{ uri: profileUrl || "../../assets/img/person.png" }}
                         style={styles.profileImage}
@@ -49,92 +72,76 @@ export const ProfileScreen = () => {
                     </View>
                 </TouchableOpacity>
 
-                {/* Username and Email */}
-                <View style={styles.userInfo}>
-                    <View style={styles.usernameContainer}>
-                        {editable ? (
+                {/* Form Fields */}
+                <View style={styles.formContainer}>
+                    <Text style={styles.label}>Username</Text>
+                    <TextInput
+                        style={[styles.input, !editable && styles.readonlyInput]}
+                        value={username}
+                        onChangeText={setUsername}
+                        editable={editable}
+                    />
+
+                    <Text style={styles.label}>Email</Text>
+                    <TextInput
+                        style={[styles.input, !editable && styles.readonlyInput]}
+                        value={email}
+                        onChangeText={setEmail}
+                        editable={editable}
+                        keyboardType="email-address"
+                    />
+
+                    {/* Social Links */}
+                    <Text style={styles.label}>Social Links</Text>
+                    {socialLinks.map((link, index) => (
+                        <View key={index} style={styles.socialRow}>
                             <TextInput
-                                style={styles.usernameInput}
-                                value={username}
-                                onChangeText={setUsername}
-                                placeholder="Username"
-                                autoCapitalize="none"
+                                style={[styles.input, { flex: 1 }]}
+                                value={link.url}
+                                onChangeText={(text) => {
+                                    const newLinks = [...socialLinks];
+                                    newLinks[index].url = text;
+                                }}
+                                editable={editable}
                             />
-                        ) : (
-                            <Text style={styles.usernameText}>{username || "Your Name"}</Text>
-                        )}
-                        {userTag === "Dev" && (
-                            <View style={styles.devTag}>
-                                <Text style={styles.devTagText}>Dev</Text>
-                            </View>
-                        )}
-                    </View>
-                    <Text style={styles.emailText}>{email}</Text>
+                            {!editable && (
+                                <TouchableOpacity
+                                    style={styles.openButton}
+                                    onPress={() => openLink(link.url)}
+                                >
+                                    {React.createElement(link.icon, { color: AppColors.white, size: 20 })}
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    ))}
                 </View>
+            </ScrollView>
 
-                {/* Action Buttons */}
-                <View style={styles.actionButtons}>
-                    <TouchableOpacity style={styles.actionButton} onPress={handleSave}>
-                        <Text style={styles.actionButtonText}>{editable ? "Save" : "Edit"}</Text>
-                    </TouchableOpacity>
-                </View>
+            {/* Bottom Edit/Save Button */}
+            <View style={styles.bottomButtonContainer}>
+                <TouchableOpacity style={styles.actionButton} onPress={handleSave}>
+                    <Text style={styles.actionButtonText}>{editable ? "Save" : "Edit"}</Text>
+                </TouchableOpacity>
             </View>
-            <View style={styles.accountContainer}>
-                <Text style={styles.label}>Username</Text>
-                <TextInput
-                    value={username}
-                    onChangeText={setUsername}
-                    editable={editable}
-                    style={styles.input}
-                />
-
-                <Text style={styles.label}>Email (read-only)</Text>
-                <TextInput
-                    value={email}
-                    editable={false}
-                    style={[styles.input, { backgroundColor: AppColors.lightGray }]}
-                />
-            </View>
-        </ScrollView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flexGrow: 1,
-        paddingHorizontal: AppConstants.viewMarginBottom,
-        paddingTop: 40,
-        backgroundColor: AppColors.white,
-        alignItems: "center",
-    },
-    accountContainer: {
-        width: "100%",
-        marginTop: 20,
-    },
-
-    profileSection: {
-        width: "100%",
-        alignItems: "center",
-        marginBottom: 30,
-        paddingTop: 30,
-        borderBottomWidth: 1,
-        borderBottomColor: AppColors.lightGray,
-        paddingBottom: 20,
-    },
+    container: { flex: 1, backgroundColor: AppColors.green50 },
+    scrollContainer: { padding: 20, paddingBottom: 100 },
     profileImageWrapper: {
-        position: "relative",
         width: 150,
         height: 150,
         borderRadius: 75,
         borderWidth: 2,
         borderColor: AppColors.green900,
         marginBottom: 20,
+        alignSelf: "center",
+        position: "relative",
+        marginTop: 100
     },
-    profileImage: {
-        width: "100%",
-        height: "100%",
-        borderRadius: 75,
-    },
+    profileImage: { width: "100%", height: "100%", borderRadius: 75 },
     editIconOverlay: {
         position: "absolute",
         bottom: 5,
@@ -145,82 +152,42 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: AppColors.white,
     },
-    userInfo: {
-        alignItems: "center",
-        marginBottom: 20,
-    },
-    usernameContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 5,
-    },
-    usernameText: {
-        fontSize: 28,
-        fontWeight: "bold",
-        color: AppColors.black,
-    },
-    usernameInput: {
-        fontSize: 28,
-        fontWeight: "bold",
-        color: AppColors.black,
-        borderBottomWidth: 1,
-        borderBottomColor: AppColors.darkGreen,
-        textAlign: "center",
-        paddingHorizontal: 5,
-    },
-    devTag: {
-        backgroundColor: AppColors.darkGreen,
-        borderRadius: 4,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        marginLeft: 10,
-    },
-    devTagText: {
-        color: AppColors.white,
-        fontSize: 12,
-        fontWeight: "bold",
-    },
-    emailText: {
-        fontSize: 16,
-        color: AppColors.darkGray,
-    },
-    actionButtons: {
-        flexDirection: "row",
-        gap: 10,
-    },
-    actionButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: AppColors.darkGreen,
-        borderRadius: AppConstants.buttonRadius,
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        flex: 1,
-    },
-    actionButtonText: {
-        color: AppColors.white,
-        fontWeight: "600",
-        fontSize: 16,
-        marginLeft: 8,
-    },
-    logoutButton: {
-        backgroundColor: AppColors.gray,
-    },
-    label: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: AppColors.green900,
-        marginBottom: 6,
-        marginTop: 10,
-    },
+    formContainer: { marginTop: 10 },
+    label: { fontSize: 16, fontWeight: "600", color: AppColors.green900, marginBottom: 6, marginTop: 10 },
     input: {
-        borderWidth: 2,
+        borderWidth: 1,
         borderColor: AppColors.green900,
         borderRadius: AppConstants.inputRadius,
         paddingHorizontal: AppConstants.inputWidth,
         paddingVertical: AppConstants.inputHeight,
         fontSize: 16,
-        marginBottom: 12,
+        marginBottom: 10,
+        color: AppColors.black,
+    },
+    readonlyInput: { backgroundColor: "#f2f2f2" },
+    bottomButtonContainer: {
+        position: "absolute",
+        bottom: 10,
+        left: 20,
+        right: 20,
+    },
+    actionButton: {
+        backgroundColor: AppColors.darkGreen,
+        borderRadius: AppConstants.buttonRadius,
+        paddingVertical: AppConstants.inputHeight,
+        alignItems: "center",
+    },
+    actionButtonText: { color: AppColors.white, fontSize: 16, fontWeight: "600" },
+    socialRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: 'center',
+        marginBottom: 10,
+    },
+    openButton: {
+        marginLeft: 10,
+        padding: 10,
+        backgroundColor: AppColors.darkGreen,
+        borderRadius: 50,
     },
 });
